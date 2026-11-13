@@ -27,7 +27,9 @@
   let dbp = null;
   let tplCache = null; // 內建範本（data/templates.json）
   let custom = {};     // 自訂範本
-  let company = '';
+  // 富民工具箱：公司名稱固定，不讓使用者修改（印在每張檢查表最上方）
+  const FIXED_COMPANY = '富民營造股份有限公司';
+  let company = FIXED_COMPANY;
 
   /* ---------- IndexedDB 小工具 ---------- */
   function db() {
@@ -88,7 +90,10 @@
     if (!title) throw new Error('請填寫檢查表名稱');
     if (!category) throw new Error('請填寫工作類別');
     const items = (Array.isArray(t.items) ? t.items : [])
-      .map(it => [str(it && it[0], 200), str(it && it[1], 300)])
+      .map(it => {
+        const g = str(it && it[2], 20); // 大項（可無）
+        return g ? [str(it && it[0], 200), str(it && it[1], 300), g] : [str(it && it[0], 200), str(it && it[1], 300)];
+      })
       .filter(([name]) => name);
     if (!items.length) throw new Error('至少要有一個檢查項目（空白的項目不會儲存）');
     if (items.length > 80) throw new Error('檢查項目最多 80 項');
@@ -153,7 +158,7 @@
 
   async function init() {
     custom = (await kvGet('customTemplates')) || {};
-    company = (await kvGet('company')) || '';
+    company = FIXED_COMPANY; // 不讀裝置上存的公司名稱，一律用固定值
     projects = (await kvGet('projects')) || [];
     current = await kvGet('current');
     if (!projects.length) await addProject(DEFAULT_PROJECT);
@@ -338,7 +343,7 @@
       if (!/^C\d+$/.test(id)) return;
       try { custom = { ...custom, [id]: cleanTemplate(t) }; } catch (e) {} // 格式不對的略過
     });
-    if (!company && data.company) company = str(data.company, 40); // 這台還沒填公司名稱才帶入
+    // 公司名稱固定，不從備份檔帶入
     await tx(['forms', 'kv'], 'readwrite', t => {
       forms.forEach(f => t.objectStore('forms').put(f));
       t.objectStore('kv').put({ key: 'projects', value: projects });
@@ -349,10 +354,8 @@
     await init(); // 補齊缺少的範本
     return { projects: data.projects.length, forms: forms.length, templates: Object.keys(tpls).length, pins };
   }
-  async function setCompany(name) {
-    company = str(name, 40);
-    await kvSet('company', company);
-  }
+  // 公司名稱固定：保留介面相容，但不接受修改
+  async function setCompany() { company = FIXED_COMPANY; }
 
   /* ---------- 平面圖巡查筆記（與主網站 js/server-store.js 的 PLAN_STORE 相同介面） ---------- */
   const CATS = ['土建', '水電', '機電', '職安', '其他'];

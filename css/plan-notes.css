@@ -134,7 +134,7 @@
 .pn-crop { position: relative; background: #f3f4f6; border: 1px solid #e5e7eb; touch-action: none; user-select: none; -webkit-user-select: none; }
 .pn-crop img { display: block; width: 100%; height: auto; opacity: .6; pointer-events: none; }
 .pn-rect { position: absolute; box-sizing: border-box; border: 3px solid #e5484d; background: rgba(229, 72, 77, .07); cursor: move; touch-action: none; }
-.pn-crop { overflow: hidden; }
+.pn-crop { overflow: hidden; flex-shrink: 0; } /* 修正：裁切框多（例如 4 個）時，預覽圖在彈性版面中被壓成一條線 */
 .pn-rect-label { position: absolute; left: 4px; top: 4px; padding: 2px 8px; font-size: 13px; font-weight: 700; color: #fff; background: #e5484d; border-radius: 6px; pointer-events: none; }
 .pn-h { position: absolute; width: 26px; height: 26px; margin: -13px; background: #fff; border: 3px solid #e5484d; border-radius: 50%; touch-action: none; }
 .pn-h-nw { left: 0; top: 0; cursor: nwse-resize; }

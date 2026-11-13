@@ -1059,20 +1059,19 @@ button { font: inherit; cursor: pointer; }
 .pp-sign-img { height: 15mm; max-width: 45mm; object-fit: contain; vertical-align: middle; }
 .pp-sign-blank { display: inline-block; width: 35mm; height: 12mm; }
 
-/* ----- 富民版列印格式（SelfCheckPrint format: 'fumin'） ----- */
-.pp-fm .fm-top { display: flex; justify-content: space-between; font-size: 9pt; color: #333; border-bottom: 2px solid #0b3c78; padding-bottom: 2px; margin-bottom: 4px; }
-.pp-fm .fm-company { color: #0b3c78; font-size: 16pt; letter-spacing: 4px; }
-.pp-fm .fm-level { text-align: center; font-size: 9.5pt; color: #333; }
-.pp-fm .pp-table th { background: #e8eef7; }
-.pp-fm .pp-block th { font-weight: 700; text-align: center; }
-.pp-fm .fm-no { text-align: center; }
-.pp-fm .fm-legend { margin-top: 2px; font-size: 9pt; color: #333; }
-.pp-fm .fm-signs { margin-top: 6px; break-inside: avoid; }
-.pp-fm .fm-signs th { font-weight: 700; }
-.pp-fm .fm-sign-row td { height: 18mm; text-align: center; }
-.pp-fm .fm-sign-row .pp-sign-img { max-width: 48mm; }
-.pp-fm .fm-remarks { margin-top: 6px; font-size: 9.5pt; line-height: 1.4; }
-.pp-fm .fm-foot { display: flex; justify-content: space-between; margin-top: 6px; padding-top: 2px; border-top: 1px solid #999; font-size: 8.5pt; color: #555; }
+/* 填表畫面：檢查項目前的大項標籤（例：放樣、骨架安裝） */
+.sk-item-grp { display: inline-block; margin-right: 6px; padding: 0 6px; font-size: 12px; font-weight: 600; color: #0b3c78; background: #e8eef7; border-radius: 4px; vertical-align: 1px; }
+
+/* ----- 富民版列印格式（依竹圍_自主檢查表 Word 表7：標楷體感、無底色、黑框） ----- */
+.pp-fm { font-family: "DFKai-SB", "BiauKai", "標楷體", "Microsoft JhengHei", serif; font-size: 11pt; }
+.pp-fm .fm-code { text-align: center; font-size: 13pt; font-weight: 700; margin-bottom: 2px; }
+.pp-fm .fm-company { font-size: 14pt; letter-spacing: 0; }
+.pp-fm .pp-title { font-size: 14pt; margin-bottom: 6px; }
+.pp-fm .pp-table th { background: none; font-weight: 400; }
+.pp-fm .pp-head th { font-weight: 400; }
+.pp-fm .fm-grp { width: 1em; }
+.pp-fm .pp-block td { font-size: 10.5pt; }
+.pp-fm .fm-signs { margin-top: 8px; font-size: 12pt; }
 
 /* 列印：只印預覽的那張紙（由 SelfCheckPrint.print 放到 #skPrintRoot） */
 #skPrintRoot { display: none; }

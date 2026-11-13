@@ -54,13 +54,10 @@
           <h3>公司與工地</h3>
           <button class="sk-dlg-x" data-x aria-label="關閉">✕</button>
         </div>
-        <form class="pj-company" data-company>
-          <label for="olCompany">公司名稱（印在檢查表最上方，可空白）</label>
-          <div class="pj-row">
-            <input id="olCompany" name="company" value="${esc(O.company())}" placeholder="例如：○○營造有限公司" maxlength="40" />
-            <button class="ac-save" type="submit">儲存</button>
-          </div>
-        </form>
+        <div class="pj-company">
+          <label>公司名稱（固定，印在檢查表最上方）</label>
+          <div class="pj-row"><b>${esc(O.company())}</b></div>
+        </div>
         <h4 class="pj-sub">工地（工程名稱）</h4>
         <p class="pj-hint">工地名稱會印在檢查表的「工程名稱」。每個工地各有一整套檢查表。</p>
         <ul class="pj-list">
@@ -104,9 +101,7 @@
         <label class="pj-company">工地名稱（必填）
           <input name="name" placeholder="例如：中壢長鴻" maxlength="50" required autocomplete="off" />
         </label>
-        <label class="pj-company">公司名稱（印在檢查表最上方，可空白）
-          <input name="company" value="${esc(O.company())}" placeholder="例如：○○營造有限公司" maxlength="40" autocomplete="off" />
-        </label>
+        <p class="pj-hint">公司名稱：<b>${esc(O.company())}</b>（固定）</p>
         <div class="pj-msg" ${msg ? '' : 'hidden'}>${esc(msg)}</div>
         <button class="sk-fill ol-setup-go" type="submit">開始填表</button>
         ${others ? `<button class="ol-setup-skip" type="button" data-setup-del>不需要「${esc(O.DEFAULT_PROJECT)}」，直接刪除它</button>` : ''}
@@ -237,17 +232,10 @@
     if (e.target.matches('[data-pw-form]')) return; // 修改密碼另外處理（登入者選單）
     if (e.target.matches('[data-setup]')) {
       const name = e.target.name.value.trim();
-      const co = e.target.company.value.trim();
       finishSetup(async () => {
         const p = placeholder();
         await O.setCurrent(p ? (await O.renameProject(p.id, name), p.id) : (await O.addProject(name)).id);
-        if (co !== O.company()) await O.setCompany(co);
       });
-      return;
-    }
-    if (e.target.matches('[data-company]')) {
-      const name = e.target.company.value.trim();
-      run(() => O.setCompany(name), name ? `公司名稱已改為「${name}」` : '公司名稱已清空，表頭會留白');
       return;
     }
     const name = e.target.name.value.trim();
@@ -372,7 +360,7 @@
   }
   async function startEdit(id, src) {
     cats = (await O.templates()).categories;
-    ed = { id, category: src.category, title: src.title, sub: src.sub || '', items: src.items.map(([n, s]) => [n, s || '']) };
+    ed = { id, category: src.category, title: src.title, sub: src.sub || '', items: src.items.map(([n, s, g]) => (g ? [n, s || '', g] : [n, s || ''])) }; // 保留大項（例：放樣、骨架安裝）
     edSnap = JSON.stringify(ed);
     renderEditor();
     tpDlg.querySelector('.tp-box').scrollTop = 0;

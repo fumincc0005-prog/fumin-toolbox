@@ -145,7 +145,7 @@
   function withStd(f, t) {
     const s = stdsOf(f);
     if (!Object.keys(s).length) return t;
-    const put = items => items.map((it, i) => (s[i] != null ? [it[0], s[i]] : it)); // 改過的沒有越南文，顯示中文
+    const put = items => items.map((it, i) => (s[i] != null ? [it[0], s[i], ...it.slice(2)] : it)); // 改過的沒有越南文，顯示中文；保留大項
     return { ...t, items: put(t.items), ...(t.vi ? { vi: { ...t.vi, items: put(t.vi.items) } } : {}) };
   }
   const itemsOf = f => withStd(f, tplText(f)).items;
@@ -368,15 +368,15 @@
           ${MARKS.map(m => `<span class="sk-legend-${m.v === '/' ? 'na' : m.v}">${m.sym} ${T(m.key)}</span>`).join('')}
         </div>
         <ol class="sk-items">
-          ${items.map(([name, std], i) => {
+          ${items.map(([name, std, grp], i) => {
             const m = d.marks[i];
             const cls = m === 'o' ? 'pass' : m === 'x' ? 'fail' : m === '/' ? 'na' : '';
-            const cont = i > 0 && items[i - 1][0] === name; // 同一檢查項目的第 2 條以後標準（Word 合併儲存格）
+            const cont = i > 0 && items[i - 1][0] === name && items[i - 1][2] === grp; // 同一檢查項目的第 2 條以後標準（Word 合併儲存格）
             return `
               <li class="sk-item ${cls ? 'is-' + cls : ''} ${cont ? 'is-cont' : ''}">
                 <div class="sk-item-main">
                   <div class="sk-item-text">
-                    <div class="sk-item-name"><span class="sk-item-no">${i + 1}.</span>${esc(name)}</div>
+                    <div class="sk-item-name"><span class="sk-item-no">${i + 1}.</span>${grp ? `<span class="sk-item-grp">${esc(grp)}</span>` : ''}${esc(name)}</div>
                     ${stdHTML(i, std)}
                   </div>
                   <div class="sk-marks" role="group" aria-label="${esc(T('itemAria')(i + 1))}">

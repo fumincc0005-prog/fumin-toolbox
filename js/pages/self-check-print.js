@@ -1,12 +1,15 @@
 /**
- * 自主檢查表：列印／PDF 用的 A4 版面（依公司 Word 範本的表格格式）
+ * 自主檢查表：列印／PDF 用的 A4 版面
  *   SelfCheckPrint.paperHTML(form, tpl, ctx)  回傳 A4 頁面 HTML
  *     form：填寫內容（可用草稿，含未儲存的修改）
- *     tpl ：範本 { title, sub, items, vi: { title, sub, items } }
- *     ctx ：{ company, project, lang }   lang：'zh' 中文／'vi' 越南文／'bi' 中越對照
+ *     tpl ：範本 { title, sub, code?, reviewStyle?, remarkStyle?, items: [[項目, 標準, 大項?]], vi?: {...} }
+ *     ctx ：{ company, project, lang, format }
+ *           lang  ：'zh' 中文／'vi' 越南文／'bi' 中越對照
+ *           format：'fumin' 富民版（依「竹圍_自主檢查表」Word 表7 格式）／'original' 原工具箱格式
  *   SelfCheckPrint.fitOnePage(scope)          稍微超出一頁（15% 內）時等比例縮小成一頁，回傳比例
  *   SelfCheckPrint.print(paperEl)             只列印這張紙
  *   SelfCheckPrint.downloadPdf(contentEl, filename)  產生 PDF 檔下載（html2pdf.js，內建於 js/vendor）
+ *   SelfCheckPrint.FORMATS                    可選的表格格式 [[值, 名稱]]
  *
  * 公司名稱為專有名詞，各語言都顯示中文；使用者手填的內容（廠商、位置、實際檢查情形、
  * 其他檢查項目 form.extras）照原樣顯示，接在範本檢查項目之後。
@@ -53,28 +56,30 @@
          '3. Phiếu này do nhân viên thi công tại hiện trường kiểm tra thực tế, ghi chép đúng sự thật và ký xác nhận.'],
     signManager: ['工地負責人(或工地主任)簽名：', 'Chữ ký người phụ trách công trường (hoặc chỉ huy trưởng): '],
     signWorker: ['現場施工人員（檢查人員）簽名：', 'Chữ ký nhân viên thi công hiện trường (người kiểm tra): '],
-    // ----- 富民版格式用 -----
-    fmCode: ['表單編號：', 'Mã biểu mẫu: '],
-    fmRev: ['版次：', 'Phiên bản: '],
-    fmLevel: ['（施工品質自主檢查・三級品管第一層）', '(Tự kiểm tra chất lượng thi công - cấp 1)'],
-    fmSerial: ['流水號：', 'Số thứ tự: '],
-    fmNo: ['項次', 'STT'],
-    fmSummary: ['檢查統計', 'Thống kê'],
-    fmCount: [(a, o, x, n) => `本次檢查共 ${a} 項：合格 ${o} 項、不合格 ${x} 項、不適用 ${n} 項`,
-              (a, o, x, n) => `Tổng ${a} mục: đạt ${o}, không đạt ${x}, không áp dụng ${n}`],
-    fmVerdict: ['綜合判定', 'Kết luận'],
-    fmAllOk: ['全部合格', 'Tất cả đạt'],
-    fmFix: ['有缺失，需改正後複查', 'Có lỗi, cần khắc phục và kiểm tra lại'],
-    fmReview: ['缺失複查', 'Kiểm tra lại lỗi'],
-    fmSignTitle: ['簽認', 'Ký xác nhận'],
-    fmWorker: ['檢查人員<br>(現場施工人員)', 'Người kiểm tra<br>(nhân viên thi công)'],
-    fmManager: ['工地主任<br>(工地負責人)', 'Chỉ huy trưởng<br>(phụ trách công trường)'],
-    fmReviewer: ['複查人員', 'Người kiểm tra lại'],
-    fmR4: ['4.不合格項目應開立「缺失改善追蹤表」，改善完成並經複查合格後始得進行下一階段施工。',
-           '4. Hạng mục không đạt phải lập "Phiếu theo dõi khắc phục lỗi"; chỉ được thi công bước tiếp theo sau khi khắc phục và kiểm tra lại đạt.'],
-    fmPrinted: ['列印日期：', 'Ngày in: '],
+
+    // ----- 富民版（竹圍_自主檢查表 Word 表7 格式）用 -----
+    fmFlow: ['施工流程', 'Quy trình thi công'],
+    fmDuring: ['施工中檢查', 'Kiểm tra trong thi công'],
+    fmAfter: ['施工完成檢查', 'Kiểm tra sau khi hoàn thành'],
+    fmStd: ['設計圖說、規範之檢查標準<br>（定量定性）', 'Tiêu chuẩn theo bản vẽ, quy phạm<br>(định lượng, định tính)'],
+    fmActual: ['實際檢查情形<br>（敘述檢查值）', 'Tình trạng kiểm tra thực tế<br>(ghi giá trị kiểm tra)'],
+    fmDoneA: ['已完成改善', 'Đã khắc phục xong'],
+    fmPendA: ['未完成改善，填至「不合格管制總表」第○項進行追蹤改善',
+              'Chưa khắc phục xong, ghi vào mục ○ của "Bảng tổng hợp quản lý hạng mục không đạt" để theo dõi khắc phục'],
+    fmR1A: ['1.檢查標準及實際檢查情形應具體明確（例：磚砌完成後須不透光）或量化尺寸（例：磚縫~）。',
+            '1. Tiêu chuẩn kiểm tra và tình trạng thực tế phải cụ thể, rõ ràng (VD: tường gạch xây xong không lọt sáng) hoặc định lượng kích thước (VD: mạch gạch ~).'],
+    fmR1B: ['1.檢查標準及實際檢查情形應具體明確（例：磚砌完成後須不透光）或量化尺寸（例：磚縫7mm~10mm）。',
+            '1. Tiêu chuẩn kiểm tra và tình trạng thực tế phải cụ thể, rõ ràng (VD: tường gạch xây xong không lọt sáng) hoặc định lượng kích thước (VD: mạch gạch 7mm~10mm).'],
+    fmR2: ['2.檢查結果合格者註明「○」，不合格者註明「╳」，如無需檢查之項目則打「／」。',
+           '2. Kết quả kiểm tra đạt ghi "○", không đạt ghi "╳", hạng mục không cần kiểm tra ghi "／".'],
+    fmR3: ['3.嚴重缺失、缺失複查未能及時完成改善，應填具「不合格品管制總表」進行追蹤改善，本表單可先行存檔。',
+           '3. Lỗi nghiêm trọng hoặc lỗi chưa khắc phục kịp khi kiểm tra lại phải lập "Bảng tổng hợp quản lý hạng mục không đạt" để theo dõi; phiếu này có thể lưu hồ sơ trước.'],
+    fmR4: ['4.本表由工地現場工程師或領班實地檢查後覈實記載簽認。',
+           '4. Phiếu này do kỹ sư hiện trường hoặc tổ trưởng kiểm tra thực tế, ghi chép đúng sự thật và ký xác nhận.'],
+    fmManager: ['工地主任 (工地負責人)：', 'Chỉ huy trưởng (phụ trách công trường): '],
+    fmWorker: ['現場工程師簽名（檢查人員）：', 'Chữ ký kỹ sư hiện trường (người kiểm tra): '],
   };
-  // 列印格式：original＝原工具箱格式（依原公司 Word 範本）；fumin＝富民版格式
+  // 列印格式：fumin＝富民版（依竹圍_自主檢查表 Word 表7 格式）；original＝原工具箱格式
   const FORMATS = [['fumin', '富民版格式'], ['original', '原格式']];
 
   function paperHTML(form, tpl, ctx) {
@@ -86,7 +91,7 @@
       const w = html ? v : esc(v);
       if (lang === 'zh') return z;
       if (lang === 'vi') return w;
-      if (w === z) return z; // 工地自己改的管理標準沒有越南文，只印一次
+      if (w === z) return z; // 工地自己改的管理標準、沒有越南文的範本，只印一次
       return `${z}<span class="pp-vi">${w}</span>`;
     };
     const lb = (key, html = false) => pick(L[key][0], L[key][1], html);
@@ -101,127 +106,48 @@
     const sign = src => (typeof src === 'string' && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(src)
       ? `<img class="pp-sign-img" src="${esc(src)}" alt="簽名">` : '<span class="pp-sign-blank"></span>');
 
-    function itemRows() {
-      const rows = [];
+    // 連續同名（或同大項）的列數：第一列回傳合併列數，後續列回傳 0（Word 的合併儲存格）
+    const spanOf = (list, i, key) => {
+      if (i > 0 && key(list[i - 1]) === key(list[i])) return 0;
+      let n = 1;
+      while (i + n < list.length && key(list[i + n]) === key(list[i])) n++;
+      return n;
+    };
+    // 其他檢查項目（使用者自行填寫）：填表畫面會補空白列，列印時略過完全空白的列
+    const filled = x => [x.name, x.std, x.note].some(v => String(v || '').trim()) || x.mark;
+    const extras = (form.extras || []).filter(filled);
+    const rv = form.review || {};
+    const company = (ctx.company || '').split('').join(' ');
+
+    if (ctx.format === 'fumin') return fuminHTML();
+    return originalHTML();
+
+    /* ---------- 原格式（原工具箱，依原公司 Word 範本） ---------- */
+    function originalHTML() {
       const items = tpl.items;
+      const rows = [];
       for (let i = 0; i < items.length; i++) {
-        const [name, std] = items[i];
+        const [name, std, grp] = items[i];
         const [vName, vStd] = vi.items[i] || items[i];
-        // 連續同名項目 = Word 中合併的「檢查項目」儲存格
-        let span = 1;
-        if (i === 0 || items[i - 1][0] !== name) {
-          while (i + span < items.length && items[i + span][0] === name) span++;
-        } else {
-          span = 0;
-        }
+        const span = spanOf(items, i, it => `${it[2] || ''}|${it[0]}`);
+        const label = grp ? `${grp}－${name}` : name; // 原格式沒有大項欄，大項接在項目前面
         rows.push(`
           <tr class="pp-item">
-            ${span ? `<td class="pp-name" rowspan="${span}">${multi(name, vName)}</td>` : ''}
+            ${span ? `<td class="pp-name" rowspan="${span}">${multi(label, grp ? label : vName)}</td>` : ''}
             <td>${std || vStd ? multi(std, vStd) : ''}</td>
             <td>${nl(form.notes[i] || '')}</td>
             <td class="pp-mark">${SYMBOL[form.marks[i]] || ''}</td>
           </tr>`);
       }
-      // 其他檢查項目（使用者自行填寫，對應 Word 範本最後的空白列）：內容照原樣顯示
-      // 填表畫面為了方便輸入會補空白列，列印時略過完全空白的列
-      const filled = x => [x.name, x.std, x.note].some(v => String(v || '').trim()) || x.mark;
-      (form.extras || []).filter(filled).forEach(x => {
-        rows.push(`
+      extras.forEach(x => rows.push(`
           <tr class="pp-item pp-extra">
             <td class="pp-name">${nl(x.name)}</td>
             <td>${nl(x.std)}</td>
             <td>${nl(x.note)}</td>
             <td class="pp-mark">${SYMBOL[x.mark] || ''}</td>
-          </tr>`);
-      });
-      return rows.join('');
-    }
-
-    const rv = form.review || {};
-    const company = (ctx.company || '').split('').join(' ');
-    if (ctx.format === 'fumin') return fuminHTML();
-
-    /* ---------- 富民版格式 ----------
-       與原格式差異：右上角表單編號／版次、項次欄、檢查統計與綜合判定、
-       三欄式簽認表（檢查人員／工地主任／複查人員）、備註第 4 點、頁尾列印日期 */
-    function fuminHTML() {
-      const items = tpl.items;
-      const filled = x => [x.name, x.std, x.note].some(v => String(v || '').trim()) || x.mark;
-      const extras = (form.extras || []).filter(filled);
-      const all = [...form.marks.slice(0, items.length), ...extras.map(x => x.mark)];
-      const cnt = v => all.filter(m => m === v).length;
-      const [o, x, n] = [cnt('o'), cnt('x'), cnt('/')];
-      const countText = lang === 'vi' ? L.fmCount[1](all.length, o, x, n)
-        : lang === 'bi' ? `${L.fmCount[0](all.length, o, x, n)}<span class="pp-vi">${L.fmCount[1](all.length, o, x, n)}</span>`
-        : L.fmCount[0](all.length, o, x, n);
-      const done = all.length && all.every(Boolean);
-      const rows = [];
-      for (let i = 0; i < items.length; i++) {
-        const [name, std] = items[i];
-        const [vName, vStd] = vi.items[i] || items[i];
-        let span = 1;
-        if (i === 0 || items[i - 1][0] !== name) {
-          while (i + span < items.length && items[i + span][0] === name) span++;
-        } else span = 0;
-        rows.push(`
-          <tr class="pp-item">
-            <td class="fm-no">${i + 1}</td>
-            ${span ? `<td class="pp-name" rowspan="${span}">${multi(name, vName)}</td>` : ''}
-            <td>${std || vStd ? multi(std, vStd) : ''}</td>
-            <td>${nl(form.notes[i] || '')}</td>
-            <td class="pp-mark">${SYMBOL[form.marks[i]] || ''}</td>
-          </tr>`);
-      }
-      extras.forEach((e, j) => rows.push(`
-          <tr class="pp-item pp-extra">
-            <td class="fm-no">${items.length + j + 1}</td>
-            <td class="pp-name">${nl(e.name)}</td><td>${nl(e.std)}</td><td>${nl(e.note)}</td>
-            <td class="pp-mark">${SYMBOL[e.mark] || ''}</td>
           </tr>`));
-      const code = `FM-QC-SC-${esc(String(form.template || '').replace(/[^0-9A-Za-z]/g, ''))}`;
-      const printed = new Date();
-      const pd = `${printed.getFullYear()}-${String(printed.getMonth() + 1).padStart(2, '0')}-${String(printed.getDate()).padStart(2, '0')}`;
+      // .pp-fit：自動縮成一頁用的外框（見 fitOnePage）
       return `<div class="pp-fit">
-      <div class="pp-content pp-fm pp-lang-${lang}">
-        <div class="fm-top"><span>${lb('fmCode')}${code}</span><span>${lb('fmRev')}A</span></div>
-        <div class="pp-company fm-company">${esc(company)}</div>
-        <div class="pp-title">${pick(tpl.title, vi.title)}</div>
-        <div class="fm-level">${lb('fmLevel')}</div>
-        <div class="pp-no">${lb('fmSerial')}<span class="pp-no-line"></span></div>
-        <table class="pp-table pp-info">
-          <colgroup><col style="width:16%"><col style="width:34%"><col style="width:16%"><col style="width:34%"></colgroup>
-          <tr><th>${lb('project')}</th><td colspan="3">${esc(ctx.project)}</td></tr>
-          <tr><th>${lb('sub')}</th><td>${pick(tpl.sub, vi.sub)}</td><th>${lb('location')}</th><td>${esc(form.location)}</td></tr>
-          <tr><th>${lb('contractor')}</th><td>${esc(form.contractor)}</td><th>${lb('subc')}</th><td>${esc(form.sub)}</td></tr>
-          <tr><th>${lb('date')}</th><td>${dateText(form.date)}</td><th>${lb('timing')}</th><td class="pp-opts">
-            ${['before', 'during', 'after'].map(v => `<span>${box(form.timing.includes(v))}${lb(v)}</span>`).join('')}</td></tr>
-        </table>
-        <table class="pp-table pp-items">
-          <colgroup><col style="width:7%"><col style="width:21%"><col style="width:32%"><col style="width:28%"><col style="width:12%"></colgroup>
-          <tr class="pp-head"><th>${lb('fmNo')}</th><th>${lb('colItem')}</th><th>${lb('colStd')}</th><th>${lb('colActual', true)}</th><th>${lb('colResult')}</th></tr>
-          ${rows.join('')}
-          <tr class="pp-block"><th colspan="2">${lb('fmSummary')}</th><td colspan="3">${countText}<div class="fm-legend">○ ${lb('ok')}　╳ ${lb('ng')}　／ ${lb('na')}</div></td></tr>
-          <tr class="pp-block"><th colspan="2">${lb('fmVerdict')}</th><td colspan="3" class="pp-opts">
-            <span>${box(done && x === 0)}${lb('fmAllOk')}</span><span>${box(x > 0)}${lb('fmFix')}</span></td></tr>
-          <tr class="pp-block"><th colspan="2">${lb('fmReview')}</th><td colspan="3">
-            <div>${box(rv.status === 'done')}${lb('reviewDone')}</div>
-            <div>${box(rv.status === 'pending')}${lb('reviewPending')}</div>
-            <div class="pp-review"><span>${lb('reviewDate')}${dateText(rv.date)}</span><span>${lb('reviewTitle')}${esc(rv.title) || '　　　　　　'}</span></div>
-          </td></tr>
-        </table>
-        <table class="pp-table fm-signs">
-          <colgroup><col style="width:16%"><col style="width:28%"><col style="width:28%"><col style="width:28%"></colgroup>
-          <tr><th rowspan="2">${lb('fmSignTitle')}</th><th>${lb('fmWorker', true)}</th><th>${lb('fmManager', true)}</th><th>${lb('fmReviewer')}</th></tr>
-          <tr class="fm-sign-row"><td>${sign(form.signs.worker)}</td><td>${sign(form.signs.manager)}</td><td>${sign(form.signs.review)}</td></tr>
-        </table>
-        <div class="fm-remarks">
-          <div>${lb('remarks')}</div><div>${lb('r1')}</div><div>${lb('r2')}</div><div>${lb('r3')}</div><div>${lb('fmR4')}</div>
-        </div>
-        <div class="fm-foot"><span>${lb('fmCode')}${code}</span><span>${lb('fmPrinted')}${pd}</span></div>
-      </div></div>`;
-    }
-    // .pp-fit：自動縮成一頁用的外框（見 fitOnePage）
-    return `<div class="pp-fit">
       <div class="pp-content pp-lang-${lang}">
         <div class="pp-company">${esc(company)}</div>
         <div class="pp-title">${pick(tpl.title, vi.title)}</div>
@@ -242,7 +168,7 @@
         <table class="pp-table pp-items">
           <colgroup><col style="width:24%"><col style="width:34%"><col style="width:28%"><col style="width:14%"></colgroup>
           <tr class="pp-head"><th>${lb('colItem')}</th><th>${lb('colStd')}</th><th>${lb('colActual', true)}</th><th>${lb('colResult')}</th></tr>
-          ${itemRows()}
+          ${rows.join('')}
           <tr class="pp-block"><td colspan="4">
             <div>${lb('review')}</div>
             <div>${box(rv.status === 'done')}${lb('reviewDone')}</div>
@@ -265,6 +191,97 @@
           <div>${lb('signWorker')}${sign(form.signs.worker)}</div>
         </div>
       </div></div>`;
+    }
+
+    /* ---------- 富民版格式（依「竹圍_自主檢查表」Word 表7-2～7-65） ----------
+       表號（表7-x）→ 公司名稱 → 表名 → 基本資料（工程名稱／分項工程名稱＋協力廠商／檢查位置＋檢查日期／
+       施工流程／檢查結果圖例）→ 檢查項目（有大項的範本多一欄大項）→ 缺失複查結果（含簽名）→ 備註 4 點
+       → 表格下方：工地主任、現場工程師簽名 */
+    function fuminHTML() {
+      const items = tpl.items;
+      const hasGrp = items.some(it => it[2]);
+      const rows = [];
+      for (let i = 0; i < items.length; i++) {
+        const [name, std, grp] = items[i];
+        const [vName, vStd] = vi.items[i] || items[i];
+        let first = '';
+        if (hasGrp) {
+          if (grp) {
+            const gs = spanOf(items, i, it => it[2] || `#${it[0]}`);
+            const ns = spanOf(items, i, it => `${it[2]}|${it[0]}`);
+            first = (gs ? `<td class="pp-name fm-grp" rowspan="${gs}">${esc(grp)}</td>` : '')
+              + (ns ? `<td class="pp-name" rowspan="${ns}">${multi(name, vName)}</td>` : '');
+          } else {
+            const ns = spanOf(items, i, it => `${it[2] || ''}|${it[0]}`);
+            first = ns ? `<td class="pp-name" colspan="2" rowspan="${ns}">${multi(name, vName)}</td>` : '';
+          }
+        } else {
+          const ns = spanOf(items, i, it => it[0]);
+          first = ns ? `<td class="pp-name" rowspan="${ns}">${multi(name, vName)}</td>` : '';
+        }
+        rows.push(`
+          <tr class="pp-item">${first}
+            <td>${std || vStd ? multi(std, vStd) : ''}</td>
+            <td>${nl(form.notes[i] || '')}</td>
+            <td class="pp-mark">${SYMBOL[form.marks[i]] || ''}</td>
+          </tr>`);
+      }
+      extras.forEach(x => rows.push(`
+          <tr class="pp-item pp-extra">
+            <td class="pp-name"${hasGrp ? ' colspan="2"' : ''}>${nl(x.name)}</td>
+            <td>${nl(x.std)}</td><td>${nl(x.note)}</td>
+            <td class="pp-mark">${SYMBOL[x.mark] || ''}</td>
+          </tr>`));
+      const cols = hasGrp ? 5 : 4;
+      const B = tpl.reviewStyle !== 'A'; // A：舊版文字（不合格管制總表）；B：新版文字（缺失改善追蹤表），預設 B
+      const colgroup = hasGrp
+        ? '<col style="width:7%"><col style="width:17%"><col style="width:34%"><col style="width:28%"><col style="width:14%">'
+        : '<col style="width:24%"><col style="width:34%"><col style="width:28%"><col style="width:14%">';
+      return `<div class="pp-fit">
+      <div class="pp-content pp-fm pp-lang-${lang}">
+        ${tpl.code ? `<div class="fm-code">${esc(tpl.code)} ${pick(tpl.title, vi.title)}</div>` : ''}
+        <div class="pp-company fm-company">${esc(company)}</div>
+        <div class="pp-title">${pick(tpl.title, vi.title)}</div>
+        <table class="pp-table pp-info">
+          <colgroup><col style="width:18%"><col style="width:32%"><col style="width:18%"><col style="width:32%"></colgroup>
+          <tr><th>${lb('project')}</th><td colspan="3">${esc(ctx.project)}</td></tr>
+          <tr><th>${lb('sub')}</th><td>${pick(tpl.sub, vi.sub)}</td><th>${lb('subc')}</th><td>${esc(form.sub)}</td></tr>
+          <tr><th>${lb('location')}</th><td>${esc(form.location)}</td><th>${lb('date')}</th><td>${dateText(form.date)}</td></tr>
+          <tr><th>${lb('fmFlow')}</th><td colspan="3" class="pp-opts">
+            <span>${box(form.timing.includes('before'))}${lb('before')}</span><span>${box(form.timing.includes('during'))}${lb('fmDuring')}</span><span>${box(form.timing.includes('after'))}${lb('fmAfter')}</span>
+          </td></tr>
+          <tr><th>${lb('result')}</th><td colspan="3" class="pp-opts">
+            <span>○${lb('ok')}</span><span>╳${lb('ng')}</span><span>／${lb('na')}</span>
+          </td></tr>
+        </table>
+        <table class="pp-table pp-items">
+          <colgroup>${colgroup}</colgroup>
+          <tr class="pp-head"><th${hasGrp ? ' colspan="2"' : ''}>${lb('colItem')}</th><th>${lb('fmStd', true)}</th><th>${lb('fmActual', true)}</th><th>${lb('colResult')}</th></tr>
+          ${rows.join('')}
+          <tr class="pp-block"><td colspan="${cols}">
+            <div>${lb('review')}</div>
+            <div>${box(rv.status === 'done')}${B ? lb('reviewDone') : lb('fmDoneA')}</div>
+            <div>${box(rv.status === 'pending')}${B ? lb('reviewPending') : lb('fmPendA')}</div>
+            <div class="pp-review">
+              <span>${lb('reviewDate')}${dateText(rv.date)}</span>
+              <span>${lb('reviewTitle')}${esc(rv.title) || '　　　　　　'}</span>
+              <span class="pp-review-sign">${lb('sign')}${sign(form.signs.review)}</span>
+            </div>
+          </td></tr>
+          <tr class="pp-block"><td colspan="${cols}">
+            <div>${lb('remarks')}</div>
+            <div>${tpl.remarkStyle === 'A' ? lb('fmR1A') : lb('fmR1B')}</div>
+            <div>${lb('fmR2')}</div>
+            <div>${lb('fmR3')}</div>
+            <div>${lb('fmR4')}</div>
+          </td></tr>
+        </table>
+        <div class="pp-signs fm-signs">
+          <div>${lb('fmManager')}${sign(form.signs.manager)}</div>
+          <div>${lb('fmWorker')}${sign(form.signs.worker)}</div>
+        </div>
+      </div></div>`;
+    }
   }
 
   /* ---------- 自動縮成一頁 ---------- */
