@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 160" role="img" aria-label="富民營造：安全帽與打勾">
+  <!-- 富民營造工具箱標誌：深藍盾牌＋黃色安全帽＋白色打勾 -->
+  <path d="M70 4 L132 26 L132 78 C132 118 104 144 70 156 C36 144 8 118 8 78 L8 26 Z" fill="#0b3c78"/>
+  <path d="M30 78 C30 50 48 36 70 36 C92 36 110 50 110 78 Z" fill="#f2b705"/>
+  <rect x="22" y="76" width="96" height="10" rx="5" fill="#f2b705"/>
+  <rect x="64" y="30" width="12" height="20" rx="4" fill="#d99a00"/>
+  <path d="M48 112 L64 128 L94 98" fill="none" stroke="#ffffff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

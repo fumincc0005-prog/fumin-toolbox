@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="富民營造工具箱">
+  <!-- App 圖示：滿版深藍底（手機系統會自行裁成圓角／圓形），黃色安全帽＋白色打勾在中央 80% 安全範圍內 -->
+  <rect width="512" height="512" fill="#0b3c78"/>
+  <path d="M136 268 C136 178 190 132 256 132 C322 132 376 178 376 268 Z" fill="#f2b705"/>
+  <rect x="112" y="262" width="288" height="32" rx="16" fill="#f2b705"/>
+  <rect x="236" y="116" width="40" height="64" rx="12" fill="#d99a00"/>
+  <path d="M184 352 L234 400 L334 306" fill="none" stroke="#ffffff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
